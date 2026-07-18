@@ -13,4 +13,4 @@
 Пример прошел успешную валидацию на [studio.asyncapi.com](https://studio.asyncapi.com/) и на [yamllint.com](https://www.yamllint.com/).
 Посмотреть вживую можно по этой ссылке: [посмотреть пример](https://studio.asyncapi.com/?url=https://raw.githubusercontent.com/okunev-e/asyncapi_examples/main/studio/asyncapi_example.yml).
 
-<a href="https://studio.asyncapi.com/?url=https://raw.githubusercontent.com/okunev-e/asyncapi_examples/main/studio/asyncapi_example.yml"><img src="https://github.com/okunev-e/asyncapi_examples/blob/main/imgs/asyncapi_example.png" width="800"/></a>
+<a href="https://studio.asyncapi.com/?url=https://raw.githubusercontent.com/okunev-e/asyncapi_examples/main/studio/asyncapi_example.yml"><img src="https://github.com/okunev-e/asyncapi_examples/blob/main/imgs/asyncapi_webmq_example.png" width="800"/></a>
