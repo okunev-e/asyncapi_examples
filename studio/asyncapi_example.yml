@@ -1,0 +1,265 @@
+asyncapi: 2.6.0
+info:
+  title: GetOfferInfo
+  version: 1.0.0
+  description: |-
+    Общие данные о предложении по рефинансированию
+
+    ## История изменений
+    |Версия|Дата изменений|Автор      |JIRA  |
+    |------|--------------|-----------|------|
+    |1.0.0 |24.06.2026    |Окунев Е.Е.| [JIRA-1](https://jira.somesite.example/jira-1) |
+
+  contact:
+    name: "Владелец: Value Stream LittleBig"
+    url: https://confluence.somesite.example/pages/viewpage.action?pageId=10101
+  license: 
+    name: ibmmq
+defaultContentType: application/json
+# Описание серверов для передачи и получения сообщений
+servers:
+  esb:
+    url: PESBQM08
+    protocol: ibmmq
+    description: Корпоративная шина сообщений
+# Описание каналов передачи информации (для ibmmq это очереди)    
+channels:
+  # Исходящая очередь, в которую отправляется запрос на получение информации
+  OUT.GETOFFERINFO:
+    publish:
+      description: Запрос информации о предложении банка
+      operationId: getOfferInfoRequest
+      message:
+        name: GetOfferInfoRequest
+        $ref: '#/components/messages/GetOfferInfoRequest'
+      bindings:
+        ibmmq:
+          destinationType: queue
+          queue:
+            JMSDestination: queue://PESBQM08/OUT.GETOFFERINFO?mdWriteEnabled=true
+            JMSReplyTo: queue://PESBQM08/IN.GETOFFERINFO.MCHP
+          JMSRedelivered: false
+          JMS_IBM_Character_Set: UTF-8
+          JMS_IBM_Encoding: 273
+          JMS_IBM_Format: MQSTR   
+          JMS_IBM_MsgType: 1
+          JMS_IBM_PutApplType: 28
+          JMSXDeliveryCount: 1
+          JMSXUserID: esb_p_iibmq
+  # Входящая очередь, из которой читается ответ от провайдера
+  IN.GETOFFERINFO.MCHP:
+    subscribe:
+      description: Ответ провайдера с информацией о предложении или об ошибке обработки сообщения
+      operationId: getOfferInfoResponse
+      message:
+        name: GetOfferInfoResponse
+        $ref: '#/components/messages/GetOfferInfoResponse'
+
+components:
+  messages:
+    # Описание сообщения для запроса данных у провайдера
+    GetOfferInfoRequest:
+      contentType: 'application/json'
+      payload:
+        $ref: '#/components/schemas/getOfferInfoRequest'
+    # Описание сообщения с ответом от провайдера
+    GetOfferInfoResponse:
+      payload:
+        $ref: '#/components/schemas/getOfferInfoResponse'
+
+  schemas:
+    getOfferInfoRequest:
+      additionalProperties: false
+      type: object
+      description: Запрос информации об условиях реструктуризации кредита, одобренных Банком
+      required:
+        - data
+      properties:
+        data:
+          additionalProperties: false
+          type: object
+          description: Тег-контейнер с данными для выполнения запроса
+          required:
+            - clientId
+            - creditId
+          properties:
+            clientId:
+              type: string
+              description: Идентификатор клиента
+            creditId:
+              type: string
+              description: Идентификатор кредита
+          example:
+            clientId: "6702500"
+            creditId: "207010551"
+    getOfferInfoResponse:
+      additionalProperties: false
+      type: object
+      description: Ответ с информацией о предложении для клиента по его кредиту
+      properties:
+        data:
+          additionalProperties: false
+          type: object
+          description: Тег-контейнер с данными в ответе провайдера
+          properties:
+            offers:
+              additionalProperties: false
+              type: array
+              description: Список найденных активных предложений
+              items:
+                $ref: '#/components/schemas/baseItem'
+          example:
+            offers:
+              - base:
+                  systemInfo:
+                    systemCode: 'CREDITS'
+                    objectId: '250604680'
+                  contract:
+                    systemInfo:
+                      systemCode: 'CREDITS'
+                      objectId: '234865988'
+                    number: '06/24/К-10000'
+                  clientInfo:
+                    objectId: '49473947'
+                  offerNumber: 'А-0000001/26'
+                  type:
+                    code: 'Restructurization'
+                    name: null
+                  state:
+                    code: 'active'
+                    name: 'Действует'
+                    date: '2026-06-03'
+                  creationDate: '2026-06-03'
+                  startDate: '2026-06-03'
+                  expiryDate: null
+                  restructOptions:
+                    type:
+                      code: 'BankRulesRestruct'
+                      name: 'Реструктуризация по правилам Банка'
+                    decreaseCreditRate:
+                      isDecreased: false
+                      decreasedCreditRateValue: null
+                    prolongation:
+                      isProlonged: true
+                      prolongationValue: '6'
+                    repayDelay:
+                      isDelay: true
+                      debtRepayDelayMonth: 3
+                      monthlyPay: null
+    # Переиспользуемые компоненты
+    systemInfo:
+      type: object
+      description: Информация о системе учёта кредитов
+      properties:
+        systemCode:
+          type: string
+          description: Код системы
+        objectId: 
+          type: string
+          description: Идентификатор системы
+
+    type:
+      type: object
+      description: Тип объекта
+      properties:
+        code:
+          type: string
+          description: Код типа объекта
+        name:
+          type:
+            - string
+            - "null"
+          description: Название типа объекта (для отображения в UI)
+    
+    # Компонент для списка
+    baseItem:
+      title: base
+      additionalProperties: false
+      type: object
+      description: Информация о предложении
+      properties:
+        systemInfo:
+          $ref: '#/components/schemas/systemInfo'
+        contract:
+          type: object
+          description: Информация о кредите
+          properties:
+            systemInfo:
+              $ref: '#/components/schemas/systemInfo'
+        clientInfo:
+          type: object
+          description: Информация о клиенте
+          properties:
+            objectId:
+              type: string
+        offerNumber:
+          type: string
+          description: Номер предложения (для отображения в UI)
+        type:
+          $ref: '#/components/schemas/type'
+        state:
+          type: object
+          description: Статус предложения
+          properties:
+            code:
+              type: string
+            name:
+              type: string
+            date:
+              type: string
+        creationDate:
+          type: string
+          description: Дата создания предложения (в формате ГГГГ-ММ-ДД)
+        startDate:
+          type:
+            - string
+            - "null"
+          description: Дата начала действия предложения (в формате ГГГГ-ММ-ДД)
+        expiryDate:
+          type:
+            - string
+            - "null"
+          description: Дата окончания действия предложения (в формате ГГГГ-ММ-ДД)
+        restructOptions:
+          type: object
+          description: Опции реструктуризации кредита
+          properties:
+            type:
+              $ref: '#/components/schemas/type'
+            decreaseCreditRate:
+              type: object
+              description: Информация об изменении кредитного рейтинга
+              properties:
+                isDecreased:
+                  type: boolean
+                  description: Флаг изменения кредитного рейтинга (true - изменен, false - не изменен)
+                decreasedCreditRateValue:
+                  type:
+                    - string
+                    - "null"
+                  description: Значение, на какое изменен кредитный рейтинг
+            prolongation:
+              type: object
+              description: Информация о продлении срока кредита
+              properties:
+                isProlonged:
+                  type: boolean
+                  description: Флаг продления срока кредита (true - изменен, false - не изменен)
+                prolongationValue:
+                  type: string
+                  description: Величина срока продления в месяцах
+            repayDelay:
+              type: object
+              description: Информация об отложенном платеже по кредиту
+              properties:
+                isDelay:
+                  type: boolean
+                  description: Флаг отсрочки платежей (true - изменен, false - не изменен)
+                debtRepayDelayMonth:
+                  type: integer
+                  description: Величина отсрочки в месяцах
+                monthlyPay:
+                  type:
+                    - string
+                    - "null"
+                  description: Размер нового платежа после отсрочки в рублях
